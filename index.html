@@ -608,6 +608,103 @@
       padding-left: 48px;
       padding-right: 48px;
     }
+    /* NAV 커스텀 드롭다운 (모바일) */
+    .nav-dropdown { display: none; position: relative; }
+    .nav-dd-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      /* max-width: 120px; */
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      background: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .nav-dropdown.open .nav-dd-toggle,
+    .nav-dd-toggle:hover { border-color: var(--accent); background: var(--accent-lt); }
+    .nav-dd-label { min-width: 92px; text-align: left; }
+    .nav-dd-icon { color: var(--muted); transition: transform 0.28s ease; }
+    .nav-dropdown.open .nav-dd-icon { transform: rotate(180deg); color: var(--accent); }
+
+    .nav-dd-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 180px;
+      list-style: none;
+      margin: 0;
+      padding: 6px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 14px 40px rgba(15,23,42,.14);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px) scale(0.97);
+      transform-origin: top right;
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.2,.8,.25,1), visibility 0.22s ease;
+      z-index: 10;
+    }
+    .nav-dropdown.open .nav-dd-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+    .nav-dd-item {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.14s, color 0.14s;
+    }
+    .nav-dd-item:hover { background: var(--bg-alt); color: var(--text); }
+    .nav-dd-item.active { color: var(--accent); background: var(--accent-lt); font-weight: 600; }
+
+    /* ── 반응형 (≤768px) ── */
+    @media (max-width: 768px) {
+      .container { padding: 0 22px; }
+      .nav-inner { padding: 0 22px; }
+      .nav-links { display: none; }
+      .nav-dropdown { display: block; }
+
+      .hero-inner { padding: 0 22px; }
+      .hero-name { font-size: clamp(28px, 8vw, 40px); }
+
+      /* 섹션 여백 축소 */
+      #projects, #skills, #experience, #awards, #certifications { padding: 64px 0; }
+      .sec-header { margin-bottom: 32px; }
+
+      /* 프로젝트 카드: 1행 1개, 이미지 상단 / 설명 하단 */
+      .pcards-row { grid-template-columns: 1fr; gap: 16px; }
+      .pcard-featured { grid-template-columns: 1fr; }
+      .pcard-featured .pcard-img { aspect-ratio: 16/9; min-height: unset; }
+      .pcard-featured .pcard-body { padding: 24px 24px; gap: 12px; }
+      .pcard-featured .pcard-name { font-size: 19px; }
+      .pcard .pcard-body { padding: 20px 22px; }
+      .pcard-desc { font-size: 13.5px; }
+
+      /* 근무 경험 · 학력: 1행 1개 */
+      .exp-grid { grid-template-columns: 1fr; gap: 40px; }
+
+      /* 활동: 1행 1개 */
+      .awards-grid { grid-template-columns: 1fr; }
+
+      /* 자격증: 1행 1개 */
+      .certs-grid { grid-template-columns: 1fr; }
+
+      /* 모달 여백 축소 */
+      .modal-body { padding: 48px 20px 12px; }
+      .modal-head-title { font-size: 21px; }
+    }
+
   </style>
 </head>
 <body>
@@ -629,6 +726,19 @@
       <a class="nav-link" href="#experience">근무 경험 · 학력</a>
       <a class="nav-link" href="#awards">활동</a>
       <a class="nav-link" href="#certifications">자격증</a>
+    </div>
+    <div class="nav-dropdown">
+      <button class="nav-dd-toggle" type="button" aria-expanded="false" aria-haspopup="true">
+        <span class="nav-dd-label">프로젝트</span>
+        <svg class="nav-dd-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <ul class="nav-dd-menu" role="menu">
+        <li class="nav-dd-item active" role="menuitem" data-target="#projects">프로젝트</li>
+        <li class="nav-dd-item" role="menuitem" data-target="#skills">기술</li>
+        <li class="nav-dd-item" role="menuitem" data-target="#experience">근무 경험 · 학력</li>
+        <li class="nav-dd-item" role="menuitem" data-target="#awards">활동</li>
+        <li class="nav-dd-item" role="menuitem" data-target="#certifications">자격증</li>
+      </ul>
     </div>
   </div>
 </nav>
@@ -1111,6 +1221,14 @@
       if (e.isIntersecting) {
         const id = e.target.id;
         navLinks.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + id));
+        const dd = document.querySelector('.nav-dropdown');
+        if (dd) {
+          dd.querySelectorAll('.nav-dd-item').forEach((it) => {
+            const match = it.getAttribute('data-target') === '#' + id;
+            it.classList.toggle('active', match);
+            if (match) dd.querySelector('.nav-dd-label').textContent = it.textContent;
+          });
+        }
       }
     });
   }, { rootMargin: '-45% 0px -45% 0px' });
@@ -1157,17 +1275,47 @@
       if (!running) { target = current = window.scrollY; }
     }, { passive: true });
 
+    // 공용: 해시로 부드럽게 이동
+    function scrollToHash(hash) {
+      const el = document.getElementById(hash.slice(1));
+      if (!el) return;
+      target = clamp(el.getBoundingClientRect().top + window.scrollY - NAV_H);
+      start();
+    }
+
     // nav 링크 클릭 → 해당 섹션으로 부드럽게 이동
     document.querySelectorAll('a[href^="#"]').forEach((a) => {
       a.addEventListener('click', (e) => {
-        const id = a.getAttribute('href').slice(1);
-        const el = document.getElementById(id);
-        if (!el) return;
+        const hash = a.getAttribute('href');
+        if (!document.getElementById(hash.slice(1))) return;
         e.preventDefault();
-        target = clamp(el.getBoundingClientRect().top + window.scrollY - NAV_H);
-        start();
+        scrollToHash(hash);
       });
     });
+
+    // nav 커스텀 드롭다운(모바일)
+    const dd = document.querySelector('.nav-dropdown');
+    if (dd) {
+      const toggle = dd.querySelector('.nav-dd-toggle');
+      const label = dd.querySelector('.nav-dd-label');
+      const items = dd.querySelectorAll('.nav-dd-item');
+
+      const openDD = () => { dd.classList.add('open'); toggle.setAttribute('aria-expanded', 'true'); };
+      const closeDD = () => { dd.classList.remove('open'); toggle.setAttribute('aria-expanded', 'false'); };
+
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dd.classList.contains('open') ? closeDD() : openDD();
+      });
+      items.forEach((it) => {
+        it.addEventListener('click', () => {
+          scrollToHash(it.getAttribute('data-target'));
+          closeDD();
+        });
+      });
+      document.addEventListener('click', (e) => { if (!dd.contains(e.target)) closeDD(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDD(); });
+    }
   })();
 
   // ── 프로젝트 상세 모달 ──
