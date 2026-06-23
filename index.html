@@ -349,8 +349,9 @@
     .pcards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     /* CAROUSEL (좌우 버튼) */
     .carousel { position: relative; }
-    /* 좌우만 잘라 옆 카드를 숨기고, 상하는 열어 hover 그림자가 보이게 함 */
-    .carousel-viewport { overflow: visible; clip-path: inset(-50px -14px -90px -14px); padding: 0 0 40px; }
+    /* 가로는 clip(스크롤 안 생김)으로 옆 카드를 숨기고, 세로는 visible로 hover 그림자를 살림.
+       overflow-clip-margin으로 좌우에 14px 여백을 둬 카드 그림자가 잘리지 않게 함(간격 20px보다 작아 옆 카드는 안 보임) */
+    .carousel-viewport { overflow-x: clip; overflow-y: visible; overflow-clip-margin: 14px; padding: 0 0 40px; }
     .carousel-track {
       display: flex;
       gap: 20px;
@@ -878,7 +879,7 @@
       /* 모달 여백 축소 */
       .modal-overlay { padding: 14px; }
       .modal { max-width: 100%; }
-      .modal-body { padding: 48px 16px 12px; }
+      .modal-body { padding: 48px 24px 24px; }
       .modal-head-title { font-size: 21px; }
       .modal-shot { height: 300px; }
 
