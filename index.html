@@ -361,8 +361,9 @@
     /* CAROUSEL (좌우 버튼) */
     .carousel { position: relative; }
     /* 가로는 clip(스크롤 안 생김)으로 옆 카드를 숨기고, 세로는 visible로 hover 그림자를 살림.
-       overflow-clip-margin으로 좌우에 14px 여백을 둬 카드 그림자가 잘리지 않게 함(간격 20px보다 작아 옆 카드는 안 보임) */
-    .carousel-viewport { overflow-x: clip; overflow-y: visible; overflow-clip-margin: 14px; padding: 0 0 40px; }
+       좌우 패딩(20px=카드 간격) + 같은 크기 음수 마진으로 클립 경계를 카드 바깥 20px에 둠 →
+       끝 카드 그림자가 잘리지 않고, 카드 정렬은 그대로이며, 옆 카드도 비치지 않음(overflow-clip-margin 미지원 브라우저에서도 동작) */
+    .carousel-viewport { overflow-x: clip; overflow-y: visible; padding: 0 20px 40px; margin: 0 -20px; }
     .carousel-track {
       display: flex;
       gap: 20px;
@@ -730,6 +731,8 @@
     /* CERTIFICATIONS */
     #certifications { padding: 96px 0; }
     .certs-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    /* 3D 틸트용 원근감 컨텍스트 */
+    #certifications .carousel-slide { perspective: 1000px; }
     .cert-card {
       background: #ffffff;
       border: 1px solid var(--border);
@@ -740,6 +743,8 @@
       flex-direction: column;
       position: relative;
       overflow: hidden;
+      transform-style: preserve-3d;
+      will-change: transform;
       transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
     }
     .cert-card::before {
@@ -760,7 +765,7 @@
       opacity: 0.9;
       pointer-events: none;
     }
-    .cert-card:hover { border-color: var(--accent); box-shadow: 0 12px 32px rgba(37,99,235,.13); transform: translateY(-4px); }
+    .cert-card:hover { border-color: transparent; box-shadow: 0 6px 18px rgba(0,0,0,.12); transform: translateY(-4px); }
     .cert-issuer { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; color: var(--accent); text-transform: uppercase; padding-right: 38px; }
     .cert-name { font-size: 22px; letter-spacing: -0.03em; font-weight: 700; color: var(--text); line-height: 1.3; flex: 1; display: flex; align-items: center; margin: 18px 0; }
     .cert-meta { font-size: 12px; color: var(--muted); margin-top: auto; padding-top: 16px; border-top: 1px dashed var(--border); }
@@ -1776,6 +1781,40 @@
     buildDots();
     update();
   });
+
+  // ── 자격증 카드 3D 틸트 (framer-motion 3d-card 효과의 바닐라 구현) ──
+  (function () {
+    // 마우스 hover가 없는 터치 기기에서는 비활성화
+    if (window.matchMedia('(hover: none)').matches) return;
+
+    const RANGE_DEG = 8;       // 전체 회전 범위(°) — 실제 최대 ±4°
+    const EASE_MOVE  = 'transform 0.12s ease-out';
+    const EASE_RESET = 'transform 0.5s cubic-bezier(.22,.61,.36,1), box-shadow 0.18s, border-color 0.18s';
+
+    document.querySelectorAll('#certifications .cert-card').forEach((card) => {
+      let raf = null;
+
+      card.addEventListener('mousemove', (e) => {
+        const r = card.getBoundingClientRect();
+        const xPct = (e.clientX - r.left) / r.width - 0.5;   // -0.5 ~ 0.5
+        const yPct = (e.clientY - r.top) / r.height - 0.5;
+        if (raf) cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const rx = (-yPct * RANGE_DEG).toFixed(2);   // 위/아래 → X축 회전
+          const ry = (xPct * RANGE_DEG).toFixed(2);    // 좌/우  → Y축 회전
+          card.style.transition = EASE_MOVE;
+          card.style.transform =
+            `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-4px) scale(1.01)`;
+        });
+      });
+
+      card.addEventListener('mouseleave', () => {
+        if (raf) cancelAnimationFrame(raf);
+        card.style.transition = EASE_RESET;
+        card.style.transform = '';   // 원위치(스프링처럼 부드럽게 복귀)
+      });
+    });
+  })();
 </script>
 
 </body>
