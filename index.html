@@ -455,6 +455,7 @@
       width: 100%;
       max-width: 50vw;
       max-height: 88vh;
+      max-height: 88dvh;
       background: #fff;
       border-radius: 22px;
       overflow-y: auto;
@@ -863,7 +864,7 @@
       .nav-dropdown { display: block; }
 
       .hero-inner { padding: 0 22px; }
-      .hero-name { font-size: clamp(19px, 5.4vw, 30px); }
+      .hero-name { font-size: clamp(26px, 7.6vw, 38px); }
 
       /* 섹션 여백 축소 */
       #projects, #skills, #experience, #awards, #certifications { padding: 64px 0; }
@@ -887,12 +888,12 @@
       /* 자격증: 1행 1개 */
       .certs-grid { grid-template-columns: 1fr; }
 
-      /* 모달 여백 축소 */
-      .modal-overlay { padding: 14px; }
-      .modal { max-width: 100%; }
+      /* 모달 여백 축소 + 화면(보이는 높이) 안에 들어오도록 dvh 사용 */
+      .modal-overlay { padding: 10px; }
+      .modal { max-width: 100%; max-height: calc(100dvh - 20px); }
       .modal-body { padding: 48px 24px 24px; }
       .modal-head-title { font-size: 21px; }
-      .modal-shot { height: 300px; }
+      .modal-shot { height: 38dvh; min-height: 220px; }
 
       /* 본문 제목·목록 모바일 글씨 크기 + 좌우 여백 */
       .modal-section h4 { font-size: 17px; padding: 0 4px; }
