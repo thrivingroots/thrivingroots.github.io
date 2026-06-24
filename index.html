@@ -1663,10 +1663,13 @@
         if (next) next.disabled = current >= thumbs.length - 1;
       }
 
-      // 선택한 썸네일을 스트립 중앙으로 스크롤(모달 세로 스크롤 영향 없음)
-      function centerThumb(thumb) {
-        const target = thumb.offsetLeft - (strip.clientWidth - thumb.clientWidth) / 2;
-        strip.scrollTo({ left: target, behavior: 'smooth' });
+      // 선택한 썸네일을 스트립 중앙으로 스크롤(실제 렌더 위치 기준 → offsetParent 영향 없음).
+      // 스크롤 한계에선 자연히 클램프되어 맨 앞은 좌측, 맨 뒤는 우측에 위치.
+      function centerThumb(thumb, behavior = 'smooth') {
+        const sRect = strip.getBoundingClientRect();
+        const tRect = thumb.getBoundingClientRect();
+        const delta = (tRect.left - sRect.left) - (sRect.width - tRect.width) / 2;
+        strip.scrollBy({ left: delta, behavior });
       }
 
       function show(i) {
@@ -1688,14 +1691,19 @@
       thumbs.forEach((thumb, i) => thumb.addEventListener('click', () => show(i)));
       if (prev) prev.addEventListener('click', () => show(current - 1));
       if (next) next.addEventListener('click', () => show(current + 1));
-      window.addEventListener('resize', updateArrows);
+      window.addEventListener('resize', () => { centerThumb(thumbs[current], 'auto'); updateArrows(); });
 
-      // 모달 열릴 때 화살표 상태 갱신
+      // 모달 열릴 때 중앙정렬·화살표 상태 갱신
       const ov = strip.closest('.modal-overlay');
       if (ov) {
-        new MutationObserver(() => { if (ov.classList.contains('open')) setTimeout(updateArrows, 50); })
-          .observe(ov, { attributes: true, attributeFilter: ['class'] });
+        new MutationObserver(() => {
+          if (ov.classList.contains('open')) setTimeout(() => {
+            centerThumb(thumbs[current], 'auto');
+            updateArrows();
+          }, 50);
+        }).observe(ov, { attributes: true, attributeFilter: ['class'] });
       }
+      centerThumb(thumbs[current], 'auto');
       updateArrows();
     });
   })();
