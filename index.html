@@ -130,9 +130,19 @@
       z-index: -1;
       overflow: hidden;
       pointer-events: none;
+      /* difference 블렌드를 오로라 내부로 한정 → 페이지 스크롤 시 뒤 콘텐츠와 재합성하지 않음 */
+      isolation: isolate;
+      /* 페인트를 박스 안으로 격리하고 독립 GPU 레이어로 승격 → 스크롤 시 값싸게 합성 */
+      contain: layout paint style;
+      transform: translateZ(0);
       -webkit-mask-image: radial-gradient(ellipse 120% 85% at 50% -8%, #000 0%, #000 42%, transparent 82%);
               mask-image: radial-gradient(ellipse 120% 85% at 50% -8%, #000 0%, #000 42%, transparent 82%);
     }
+    /* nav가 불투명해진(=hero를 벗어난) 상태이거나 모달이 열렸을 때 애니메이션 정지. hero 영역에선 재생. */
+    .aurora.paused-scrolled .aurora-layer::after,
+    .aurora.paused-modal    .aurora-layer::after { animation-play-state: paused; }
+    /* 모달이 화면을 덮을 땐 오로라를 페인트에서 제외 → backdrop-filter가 정적 배경만 블러 */
+    body.modal-open .aurora { visibility: hidden; }
 
     .aurora-layer {
       --white: #ffffff;
@@ -1430,12 +1440,18 @@
   (function () {
     const nav = document.querySelector('.nav');
     const projects = document.getElementById('projects');
+    const aurora = document.querySelector('.aurora');
     if (nav && projects) {
+      // offsetTop을 한 번만 읽어두고 스크롤 중엔 scrollY만 비교 → 매 프레임 강제 레이아웃(layout thrash) 방지
+      let projTop = projects.offsetTop;
       const update = () => {
-        nav.classList.toggle('scrolled', projects.getBoundingClientRect().top <= 60);
+        const scrolled = window.scrollY >= projTop - 60;
+        nav.classList.toggle('scrolled', scrolled);
+        // nav가 불투명해지는 시점에 오로라 애니메이션도 정지, 투명해지면 재개
+        if (aurora) aurora.classList.toggle('paused-scrolled', scrolled);
       };
       window.addEventListener('scroll', update, { passive: true });
-      window.addEventListener('resize', update);
+      window.addEventListener('resize', () => { projTop = projects.offsetTop; update(); });
       update();
     }
   })();
@@ -1549,12 +1565,15 @@
   (function () {
     let activeModal = null;
 
+    const aurora = document.querySelector('.aurora');
+
     function openModal(modal) {
       activeModal = modal;
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
       document.body.classList.add('modal-open');
       document.documentElement.classList.add('modal-open');
+      if (aurora) aurora.classList.add('paused-modal');   // 모달 뒤 오로라 정지 → backdrop-filter 부담 제거
     }
     function closeModal() {
       if (!activeModal) return;
@@ -1563,6 +1582,7 @@
       activeModal.querySelector('.modal').scrollTop = 0;
       document.body.classList.remove('modal-open');
       document.documentElement.classList.remove('modal-open');
+      if (aurora) aurora.classList.remove('paused-modal');   // hero 가시성에 따른 정지는 IntersectionObserver가 관리
       activeModal = null;
     }
 
